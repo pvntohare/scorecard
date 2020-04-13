@@ -16,10 +16,9 @@ class Player:
         self.sixes = 0
         self.balls_faced = 0
         self.overs_bowled = 0
+        self.maiden_overs = 0
         self.balls_bowled = 0
         self.runs_conceded = 0
-        self.fours_conceded = 0
-        self.sixes_conceded = 0
         self.wickets_taken = 0
 
     def get_name(self) -> str:
@@ -31,10 +30,8 @@ class Player:
         self.sixes += sixes
         self.balls_faced += 1
 
-    def bowl_ball(self, runs: int, fours: int, sixes: int, wicket: int, wide: int, nb: int):
+    def bowl_ball(self, runs: int, wicket: int, wide: int, nb: int):
         self.runs_conceded += runs
-        self.fours_conceded += fours
-        self.sixes_conceded += sixes
         self.wickets_taken += wicket
         if wide != 0 or nb != 0:
             return
@@ -111,6 +108,7 @@ class Match:
 
             print("Over {0}:".format(current_over))
             num_balls = 0
+            maiden = True
             while num_balls < 6:
                 # check if all the players in batting team are out
                 if max(strike, non_strike) >= batting_team.num_players:
@@ -134,7 +132,7 @@ class Match:
                         batting_team.balls_faced += 1
                         bowling_team.balls_bowled += 1
 
-                #bowling_team.bowling_order[bowler].bowl_ball(runs, fours, sixes, wicket, wides, nbs)
+                bowling_team.bowling_order[bowler].bowl_ball(runs, wicket, wides, nbs)
 
                 runs_by_batmans = runs
                 # for no ball, ball and runs(except 1 run of no ball) will be counted for batsman
@@ -164,16 +162,38 @@ class Match:
                     runs_by_batmans -= 1
                 if runs_by_batmans % 2 == 1:
                     strike, non_strike = non_strike, strike
+                if runs > 0:
+                    maiden = False
+
+            if maiden:
+                bowling_team.bowling_order[bowler].maiden_overs += 1
 
             # print score at the end of over
             print_scorecard(batting_team, bowling_team, inning_num)
 
+        if inning_num == 2:
+            if batting_team.runs_scored == bowling_team.runs_scored:
+                print("Result: Match tied")
+                return
+            else:
+                print("Result: Team 1 won the match by {0} runs".
+                      format(bowling_team.runs_scored - batting_team.runs_scored))
+                return
+
 
 def print_scorecard(team1: Team, team2: Team, team_num: int):
     print("\nScorecard for Team {}:".format(team_num))
-    print("Player Name\tScore\t4s\t6s\tBalls")
+    print("Batsman\tR\t4s\t6s\tB")
     for p in team1.batting_order:
-        print("{0}\t{1}\t{2}\t{3}\t{4}".format(p.name, p.runs_scored, p.fours, p.sixes, p.balls_faced))
+        print("{0}\t{1}\t{2}\t{3}\t{4}".
+              format(p.name, p.runs_scored, p.fours, p.sixes, p.balls_faced))
     print("Total: {0}/{1}".format(team1.runs_scored, team1.wickets_lost))
     print("Overs: {0}.{1}\n".format(team1.overs_faced, team1.balls_faced))
+    print("Bowling for Team {}:".format(team_num ^ 1 ^ 2))
+    print("Bowler\tO\tM\tR\tW")
+    for p in team2.bowling_order:
+        if p.overs_bowled != 0 or p.balls_bowled != 0:
+            print("{0}\t{1}.{2}\t{3}\t{4}\t{5}".
+                format(p.name, p.overs_bowled, p.balls_bowled, p.maiden_overs, p.runs_conceded, p.wickets_taken))
+    print("\n")
     return None

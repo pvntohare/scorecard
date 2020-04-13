@@ -24,11 +24,13 @@ def main():
     # read players for first team
     players = read_players(1, match.team1.num_players)
     match.team1.set_players(players)
-    match.start_inning(1)
-
     # read players of second ream
     players = read_players(2, match.team2.num_players)
     match.team2.set_players(players)
+    # start the match
+    print("team1 batting")
+    match.start_inning(1)
+    print("team2 batting")
     match.start_inning(2)
 
 
