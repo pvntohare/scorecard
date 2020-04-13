@@ -11,6 +11,7 @@ def init_match_info() -> Match:
     team2 = Team("MI", num_players)
 
     match = Match(team1, team2, num_overs)
+    match.set_toss_info(team1)
 
     return match
 
@@ -19,15 +20,16 @@ def main():
     print("Hello, welcome to online scorecard system")
 
     match = init_match_info()
-    # read players for first team
-    match.team1.add_players(1)
-    # read players of second ream
-    match.team1.add_players(2)
 
-    for p in match.team1.players:
-        print(p.get_name())
-    for p in match.team2.players:
-        print(p.get_name())
+    # read players for first team
+    players = read_players(1, match.team1.num_players)
+    match.team1.set_players(players)
+    match.start_inning(1)
+
+    # read players of second ream
+    players = read_players(2, match.team2.num_players)
+    match.team2.set_players(players)
+    match.start_inning(2)
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+from typing import List
 import sys
 
 
@@ -31,3 +32,12 @@ def read_num_overs() -> int:
         sys.exit()
 
     return num_overs
+
+
+def read_players(team_num: int, num_players: int) -> List[str]:
+    players = []
+    first_player = input("Batting Order for team {0}: \n".format(team_num))
+    players.append(first_player)
+    for i in range(1, num_players):
+        players.append(input())
+    return players
