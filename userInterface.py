@@ -10,8 +10,9 @@ class Player:
 
 
 class Team:
-    def __init__(self, name):
+    def __init__(self, name, num_players):
         self.name = name
+        self.num_players = num_players
         self.players = []
 
     def set_players(self, players: List[str]):
@@ -20,6 +21,14 @@ class Team:
 
     def get_players(self) -> List[Player]:
         return self.players
+
+    def add_players(self, team_num: int):
+        players = []
+        first_player = input("Batting Order for team {0}: \n".format(team_num))
+        players.append(first_player)
+        for i in range(1, self.num_players):
+            players.append(input())
+        self.set_players(players)
 
 
 class Match:
