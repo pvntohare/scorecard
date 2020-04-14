@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import utils
 import sys
 
@@ -40,11 +40,16 @@ class Player:
             self.balls_bowled = 0
             self.overs_bowled += 1
 
+    def get_bowling_stats(self) -> Tuple[int, int, int, int, int]:
+        return self.overs_bowled, self.balls_bowled, self.maiden_overs, \
+               self.runs_conceded, self.wickets_taken
+
+    def get_batting_stats(self) -> Tuple[int, int, int, int]:
+        return self.runs_scored, self.fours, self.sixes, self.balls_faced
 
 class Team:
-    def __init__(self, name, num_players):
+    def __init__(self, name):
         self.name = name
-        self.num_players = num_players
         self.players = []
         self.batting_order = []
         self.bowling_order = []
@@ -56,12 +61,14 @@ class Team:
         self.overs_bowled = 0
         self.balls_bowled = 0
 
+    def get_num_players(self) -> int:
+        return len(self.players)
 
     def set_players(self, players: List[str]):
         for name in players:
             p = Player(name)
             self.batting_order.append(p)
-            self.bowling_order.append(p)
+            self.bowling_order = [p] + self.bowling_order
             self.players.append(p)
 
     def get_players(self) -> List[Player]:
@@ -102,7 +109,7 @@ class Match:
         non_strike = 0
         for current_over in range(1, self.overs + 1):
             # bowler to bowl the current over
-            bowler = (current_over-1) % bowling_team.num_players
+            bowler = (current_over-1) % bowling_team.get_num_players()
             # after ever over, change the batting end
             strike, non_strike = non_strike, strike
 
@@ -111,8 +118,8 @@ class Match:
             maiden = True
             while num_balls < 6:
                 # check if all the players in batting team are out
-                if max(strike, non_strike) >= batting_team.num_players:
-                    print_scorecard(batting_team, bowling_team, inning_num)
+                if max(strike, non_strike) >= batting_team.get_num_players():
+                    print_scorecard(batting_team, bowling_team, inning_num, [min(strike, non_strike)])
                     if inning_num == 1:
                         return
                     print("Result: Team 1 won the match by {0} runs".
@@ -152,9 +159,9 @@ class Match:
                 bowling_team.runs_conceded += runs
 
                 if inning_num == 2 and batting_team.runs_scored > bowling_team.runs_scored:
-                    print_scorecard(batting_team, bowling_team, inning_num)
+                    print_scorecard(batting_team, bowling_team, inning_num, [strike, non_strike])
                     print("Result: Team 2 won the match by {0} wickets".
-                          format(batting_team.num_players - batting_team.wickets_lost - 1))
+                          format(batting_team.get_num_players() - batting_team.wickets_lost - 1))
                     sys.exit()
 
                 # change the strike of batsman if needed
@@ -169,7 +176,7 @@ class Match:
                 bowling_team.bowling_order[bowler].maiden_overs += 1
 
             # print score at the end of over
-            print_scorecard(batting_team, bowling_team, inning_num)
+            print_scorecard(batting_team, bowling_team, inning_num, [strike, non_strike])
 
         if inning_num == 2:
             if batting_team.runs_scored == bowling_team.runs_scored:
@@ -181,19 +188,25 @@ class Match:
                 return
 
 
-def print_scorecard(team1: Team, team2: Team, team_num: int):
+def print_scorecard(team1: Team, team2: Team, team_num: int, batsmen: List[int]):
     print("\nScorecard for Team {}:".format(team_num))
     print("Batsman\tR\t4s\t6s\tB")
-    for p in team1.batting_order:
-        print("{0}\t{1}\t{2}\t{3}\t{4}".
-              format(p.name, p.runs_scored, p.fours, p.sixes, p.balls_faced))
+    for i in range(0,len(team1.batting_order)):
+        p = team1.batting_order[i]
+        batting = ""
+        if i == batsmen[0] or i == batsmen[-1]:
+            batting = "*"
+        r, f, s, b = p.get_batting_stats()
+        print("{0}{1}\t{2}\t{3}\t{4}\t{5}".
+              format(p.get_name(), batting, r, f, s, b))
     print("Total: {0}/{1}".format(team1.runs_scored, team1.wickets_lost))
     print("Overs: {0}.{1}\n".format(team1.overs_faced, team1.balls_faced))
     print("Bowling for Team {}:".format(team_num ^ 1 ^ 2))
     print("Bowler\tO\tM\tR\tW")
     for p in team2.bowling_order:
+        o, b, m, r, w = p.get_bowling_stats()
         if p.overs_bowled != 0 or p.balls_bowled != 0:
             print("{0}\t{1}.{2}\t{3}\t{4}\t{5}".
-                format(p.name, p.overs_bowled, p.balls_bowled, p.maiden_overs, p.runs_conceded, p.wickets_taken))
+                format(p.get_name(), o, b, m, r, w))
     print("\n")
     return None
